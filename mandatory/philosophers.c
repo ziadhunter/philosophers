@@ -113,49 +113,73 @@ int simulation_should_end(t_philo *philo)
     return (0);
 }
 
+void print_msg(t_philo *philo, int i)
+{
+    if (*(philo->simulation_has_ended))
+        return;
+    pthread_mutex_lock(&philo->mutex->printf);
+    if (i == 1)
+        printf("%ld %d is thinking\n",get_current_time_ms() - *(philo->start), philo->id);
+    else if (i == 2)
+        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+    else if (i == 3)
+        printf("%ld %d is eating\n",get_current_time_ms() - *(philo->start), philo->id);
+    else if (i == 4)
+        printf("%ld %d is sleeping\n", get_current_time_ms() - *(philo->start), philo->id);
+    pthread_mutex_unlock(&philo->mutex->printf);
+}
+
+
 void thinking_stage(t_philo *philo)
 {
     pthread_t thread;
 
-    pthread_mutex_lock(&philo->mutex->printf);
-    printf("%ld %d is thinking\n",get_current_time_ms() - *(philo->start), philo->id);
-    pthread_mutex_unlock(&philo->mutex->printf);
+    print_msg(philo, 1);
+    // pthread_mutex_lock(&philo->mutex->printf);
+    // printf("%ld %d is thinking\n",get_current_time_ms() - *(philo->start), philo->id);
+    // pthread_mutex_unlock(&philo->mutex->printf);
     if (philo->id % 2 == 1) {
         pthread_mutex_lock(&philo->left_f->mutex);
-        pthread_mutex_lock(&philo->mutex->printf);
-        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
-        pthread_mutex_unlock(&philo->mutex->printf);
-        if (simulation_should_end(philo))
-        {
-            pthread_mutex_unlock(&philo->left_f->mutex);
-            return;
-        }
+        print_msg(philo, 2);
+
+        // pthread_mutex_lock(&philo->mutex->printf);
+        // printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+        // pthread_mutex_unlock(&philo->mutex->printf);
+        // if (simulation_should_end(philo))
+        // {
+        //     pthread_mutex_unlock(&philo->left_f->mutex);
+        //     return;
+        // }
         pthread_mutex_lock(&philo->right_f->mutex);
-        pthread_mutex_lock(&philo->mutex->printf);
-        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
-        pthread_mutex_unlock(&philo->mutex->printf);
+        print_msg(philo, 2);
+        // pthread_mutex_lock(&philo->mutex->printf);
+        // printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+        // pthread_mutex_unlock(&philo->mutex->printf);
     } else {
         pthread_mutex_lock(&philo->right_f->mutex);
-        pthread_mutex_lock(&philo->mutex->printf);
-        printf("%ld %d has taken a fork\n", get_current_time_ms() - *(philo->start), philo->id);
-        pthread_mutex_unlock(&philo->mutex->printf);
-        if (simulation_should_end(philo))
-        {
-            pthread_mutex_unlock(&philo->left_f->mutex);
-            return;
-        }
+        print_msg(philo, 2);
+        // pthread_mutex_lock(&philo->mutex->printf);
+        // printf("%ld %d has taken a fork\n", get_current_time_ms() - *(philo->start), philo->id);
+        // pthread_mutex_unlock(&philo->mutex->printf);
+        // if (simulation_should_end(philo))
+        // {
+        //     pthread_mutex_unlock(&philo->left_f->mutex);
+        //     return;
+        // }
         pthread_mutex_lock(&philo->left_f->mutex);
-        pthread_mutex_lock(&philo->mutex->printf);
-        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
-        pthread_mutex_unlock(&philo->mutex->printf);
+        print_msg(philo, 2);
+        // pthread_mutex_lock(&philo->mutex->printf);
+        // printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+        // pthread_mutex_unlock(&philo->mutex->printf);
     }
 }
 
 void eating_stage(t_philo *philo)
 {
-    pthread_mutex_lock(&philo->mutex->printf);
-    printf("%ld %d is eating\n",get_current_time_ms() - *(philo->start), philo->id);
-    pthread_mutex_unlock(&philo->mutex->printf);
+    // pthread_mutex_lock(&philo->mutex->printf);
+    // printf("%ld %d is eating\n",get_current_time_ms() - *(philo->start), philo->id);
+    // pthread_mutex_unlock(&philo->mutex->printf);
+    print_msg(philo, 3);
     pthread_mutex_lock(&philo->mutex->last_time_eat);
     philo->last_time_eat = get_current_time_ms();
     pthread_mutex_unlock(&philo->mutex->last_time_eat); 
@@ -163,10 +187,11 @@ void eating_stage(t_philo *philo)
     // release fork
     pthread_mutex_unlock(&philo->left_f->mutex);
     pthread_mutex_unlock(&philo->right_f->mutex);
-    pthread_mutex_lock(&philo->mutex->printf);
     philo->meal_eaten++;
-    printf("%ld %d is sleeping\n", get_current_time_ms() - *(philo->start), philo->id);
-    pthread_mutex_unlock(&philo->mutex->printf);
+    print_msg(philo, 3);
+    // pthread_mutex_lock(&philo->mutex->printf);
+    // printf("%ld %d is sleeping\n", get_current_time_ms() - *(philo->start), philo->id);
+    // pthread_mutex_unlock(&philo->mutex->printf);
     usleep(philo->input->time_to_sleep * 1000);
 }
 
