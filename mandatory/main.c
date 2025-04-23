@@ -41,6 +41,10 @@ void parcing(char *av[], int ac, t_input *info)
 {
 	if (ac != 5 && ac != 6)
 		free_exit(1);
+	if (ac == 6)
+		info->check_meal_eated = true;
+	else 
+		info->check_meal_eated = false;
 	info->num_philo = ft_atoi(av[1]);
 	info->time_to_die = ft_atoi(av[2]);
 	info->time_to_eat = ft_atoi(av[3]);

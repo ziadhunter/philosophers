@@ -31,9 +31,12 @@ t_philo *init_philo(t_data *data)
     while (i < data->input->num_philo)
     {
         philo[i].id = i + 1;
-        philo[i].meal_eating = 0;
+        philo[i].meal_eaten = 0;
         philo[i].input = data->input;
         philo[i].right_f = &data->fork[i];
+        philo[i].mutex = data->mutex;
+        philo[i].start = &data->start;
+        philo[i].simulation_has_ended = &data->stop_simulation;
         if (i + 1 < data->input->num_philo)
             philo[i].left_f = &data->fork[i + 1];
         else
@@ -59,6 +62,27 @@ void free_failed(t_data *data, int i)
     exit(3);
 }
 
+t_mutex *init_mutex()
+{
+    t_mutex *mutex;
+    int i;
+
+    mutex = malloc(sizeof(t_mutex));
+    if (pthread_mutex_init(&mutex->stop_simulatoin, NULL) != 0)
+        return (NULL);
+    if (pthread_mutex_init(&mutex->printf, NULL) != 0)
+        return (NULL);
+    if (pthread_mutex_init(&mutex->philo_died, NULL) != 0)
+        return (NULL);
+    if (pthread_mutex_init(&mutex->start, NULL) != 0)
+        return (NULL);
+    if (pthread_mutex_init(&mutex->last_time_eat, NULL) != 0)
+        return (NULL);
+    if (pthread_mutex_init(&mutex->meal_eaten, NULL) != 0)
+        return (NULL);
+    return(mutex);
+}
+
 t_data *initialization(t_input *input)
 {
     t_data *data;
@@ -66,74 +90,128 @@ t_data *initialization(t_input *input)
     data =  malloc(sizeof(t_data));
     if (!data)
         return (NULL);
-    data->thread = malloc(sizeof(pthread_t) * input->num_philo);
+    data->thread = malloc(sizeof(pthread_t) * (input->num_philo + 2));
+    data->mutex = init_mutex();
     data->input = input;
+    data->philo_died = false;
     data->fork = init_fork(input);
     data->philo = init_philo(data);
-    if (data->fork == NULL|| data->philo == NULL || data->thread == NULL)
+    if (data->fork == NULL|| data->philo == NULL || data->thread == NULL || data->mutex == NULL)
         free_failed(data, 1);
     return (data);
 }
 
-void is_starving(void *arg)
+int simulation_should_end(t_philo *philo)
 {
-    
+    pthread_mutex_lock(&philo->mutex->stop_simulatoin);
+    if (*(philo->simulation_has_ended))
+    {
+        pthread_mutex_unlock(&philo->mutex->stop_simulatoin);
+        return (1);
+    }
+    pthread_mutex_unlock(&philo->mutex->stop_simulatoin);
+    return (0);
 }
 
 void thinking_stage(t_philo *philo)
 {
     pthread_t thread;
 
-    printf(" %d is thinking\n", philo->id);
+    pthread_mutex_lock(&philo->mutex->printf);
+    printf("%ld %d is thinking\n",get_current_time_ms() - *(philo->start), philo->id);
+    pthread_mutex_unlock(&philo->mutex->printf);
     if (philo->id % 2 == 1) {
         pthread_mutex_lock(&philo->left_f->mutex);
-        printf("%d has taken a fork\n", philo->id);
+        pthread_mutex_lock(&philo->mutex->printf);
+        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+        pthread_mutex_unlock(&philo->mutex->printf);
+        if (simulation_should_end(philo))
+        {
+            pthread_mutex_unlock(&philo->left_f->mutex);
+            return;
+        }
         pthread_mutex_lock(&philo->right_f->mutex);
-        printf("%d has taken a fork\n", philo->id);
+        pthread_mutex_lock(&philo->mutex->printf);
+        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+        pthread_mutex_unlock(&philo->mutex->printf);
     } else {
         pthread_mutex_lock(&philo->right_f->mutex);
-        printf("%d has taken a fork\n", philo->id);
+        pthread_mutex_lock(&philo->mutex->printf);
+        printf("%ld %d has taken a fork\n", get_current_time_ms() - *(philo->start), philo->id);
+        pthread_mutex_unlock(&philo->mutex->printf);
+        if (simulation_should_end(philo))
+        {
+            pthread_mutex_unlock(&philo->left_f->mutex);
+            return;
+        }
         pthread_mutex_lock(&philo->left_f->mutex);
-        printf("%d has taken a fork\n", philo->id);
+        pthread_mutex_lock(&philo->mutex->printf);
+        printf("%ld %d has taken a fork\n",get_current_time_ms() - *(philo->start), philo->id);
+        pthread_mutex_unlock(&philo->mutex->printf);
     }
 }
 
 void eating_stage(t_philo *philo)
 {
-    printf(" %d is eating\n", philo->id);
-    gettimeofday(&philo->last_time_eat, NULL);
-    usleep(philo->input->time_to_eat);
-    // Release fork
+    pthread_mutex_lock(&philo->mutex->printf);
+    printf("%ld %d is eating\n",get_current_time_ms() - *(philo->start), philo->id);
+    pthread_mutex_unlock(&philo->mutex->printf);
+    pthread_mutex_lock(&philo->mutex->last_time_eat);
+    philo->last_time_eat = get_current_time_ms();
+    pthread_mutex_unlock(&philo->mutex->last_time_eat); 
+    usleep(philo->input->time_to_eat * 1000);
+    // release fork
     pthread_mutex_unlock(&philo->left_f->mutex);
     pthread_mutex_unlock(&philo->right_f->mutex);
-    
-    printf(" %d is sleeping\n", philo->id);
-    usleep(philo->input->time_to_sleep);
+    pthread_mutex_lock(&philo->mutex->printf);
+    philo->meal_eaten++;
+    printf("%ld %d is sleeping\n", get_current_time_ms() - *(philo->start), philo->id);
+    pthread_mutex_unlock(&philo->mutex->printf);
+    usleep(philo->input->time_to_sleep * 1000);
 }
+
 
 void *philo_routine(void *arg)
 {
     t_philo *philo;
     philo = (t_philo *)arg;
-    gettimeofday(&philo->start, NULL);
-    gettimeofday(&philo->last_time_eat, NULL);
-    thinking_stage(philo);
+    pthread_mutex_lock(&philo->mutex->last_time_eat);
+    philo->last_time_eat = get_current_time_ms();
+    pthread_mutex_unlock(&philo->mutex->last_time_eat);
+    // if (philo->id % 2 == 0)
+    //     usleep(100);
+    while (!simulation_should_end(philo)) {
+        thinking_stage(philo);
+        eating_stage(philo);
+    }
+    return (NULL);
 }
 
 void philosophers(t_input *input)
 {
     t_data *data;
     int i;
-    pthread_t *thread;
     
     i = 0;
     data = initialization(input);
+    data->start = get_current_time_ms();
     while (i < data->input->num_philo)
     {
         if (pthread_create(&data->thread[i], NULL, &philo_routine, (void *)&data->philo[i]) != 0)
                 free_failed(data, 2);
         i++;
     }
+    usleep(100);
+    // thread that will check if any philo dies
+
+    if (pthread_create(&data->thread[i], NULL, &check_philo_death, (void *)data) != 0)
+        free_failed(data, 2);
+
+    // thread that will check if all philosophers has eaten their meals
+    if (data->input->check_meal_eated)
+        if (pthread_create(&data->thread[i++], NULL, &check_meals, (void *)data) != 0)
+            free_failed(data, 2);
+
     i = 0;
     while (i < data->input->num_philo) {
         pthread_join(data->thread[i], NULL);
