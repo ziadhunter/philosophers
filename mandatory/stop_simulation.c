@@ -46,9 +46,9 @@ int is_starving(t_philo *philo, long time_to_die_ms)
 
     pthread_mutex_lock(&philo->mutex->last_time_eat);
     current_time = get_current_time_ms();
-    
     if ((current_time - philo->last_time_eat) > time_to_die_ms)
     {
+        //printf("philo_id= %d time to die : %ld\n", philo->id, (current_time - philo->last_time_eat));
         is_dead = 1;
     }
     pthread_mutex_unlock(&philo->mutex->last_time_eat);
