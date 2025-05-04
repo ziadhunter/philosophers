@@ -34,6 +34,7 @@ typedef struct mutex
 	pthread_mutex_t start;
 	pthread_mutex_t last_time_eat;
 	pthread_mutex_t meal_eaten;
+	pthread_mutex_t start_thinking;
 } t_mutex;
 
 typedef struct philo
@@ -41,6 +42,8 @@ typedef struct philo
     int id;
 	t_fork *right_f;
 	t_fork *left_f;
+	struct philo *right_philo;
+	struct philo  *left_philo;
 	long *start;
 	pthread_t thread;
 	int meal_eaten;
@@ -48,6 +51,7 @@ typedef struct philo
 	t_input *input;
 	bool *simulation_has_ended;
 	t_mutex *mutex;
+	long start_thinking;
 } t_philo;
 
 typedef struct data
@@ -56,7 +60,7 @@ typedef struct data
 	t_input *input;
 	t_philo *philo;
 	t_fork *fork;
-	t_mutex *mutex;
+ 
 	pthread_t *thread;
 	bool philo_died;
 	bool stop_simulation;
