@@ -37,26 +37,12 @@ t_philo *init_philo(t_data *data)
         philo[i].mutex = data->mutex;
         philo[i].start = &data->start;
         philo[i].start_thinking = 0;
+        philo[i].philo_died = &data->philo_died;
         philo[i].simulation_has_ended = &data->stop_simulation;
         if (i + 1 < data->input->num_philo)
             philo[i].left_f = &data->fork[i + 1];
         else
             philo[i].left_f = &data->fork[0];
-        if (i == 0)
-        {
-            philo[i].left_philo = &philo[i + 1];
-            philo[i].right_philo = &philo[data->input->num_philo - 1];
-        }
-        else if (i == data->input->num_philo - 1)
-        {
-            philo[i].left_philo = &philo[0];
-            philo[i].right_philo = &philo[i - 1];
-        }
-        else
-        {
-            philo[i].left_philo = &philo[i + 1];
-            philo[i].right_philo = &philo[i - 1];
-        }
         i++;             
     }
     return (philo);
@@ -75,7 +61,7 @@ void free_failed(t_data *data, int i)
         printf("malloc or initialization of the mutex failed");
     if (i == 2)
         printf("Failed to create thread");
-    exit(3);
+    exit(1);
 }
 
 t_mutex *init_mutex()
@@ -159,49 +145,15 @@ void thinking_stage(t_philo *philo)
     pthread_t thread;
 
     print_msg(philo, 1);
-    if (philo->id  == philo->input->num_philo && philo->id % 2 == 1)
+    if (philo->id % 2 == 1) 
     {
-        // usleep(philo->input->time_to_eat / 2);
-        pthread_mutex_lock(&philo->mutex->meal_eaten);
-        while (philo->meal_eaten != philo->right_philo->meal_eaten || philo->meal_eaten + 1 != philo->left_philo->meal_eaten )
-        {
-            pthread_mutex_unlock(&philo->mutex->meal_eaten);
-            usleep(500);
-            pthread_mutex_lock(&philo->mutex->meal_eaten);
-            continue;
-        }
-        pthread_mutex_unlock(&philo->mutex->meal_eaten);
-        pthread_mutex_lock(&philo->left_f->mutex);
-        print_msg(philo, 2);
-        pthread_mutex_lock(&philo->right_f->mutex);
-        print_msg(philo, 2);
-    }
-    else if (philo->id % 2 == 1) 
-    {
-        // usleep(philo->input->time_to_eat / 2);
-        pthread_mutex_lock(&philo->mutex->meal_eaten);
-        while (philo->meal_eaten != philo->right_philo->meal_eaten || philo->meal_eaten != philo->left_philo->meal_eaten)
-        {
-            pthread_mutex_unlock(&philo->mutex->meal_eaten);
-            usleep(500);
-            pthread_mutex_lock(&philo->mutex->meal_eaten);
-            continue;
-        }
-        pthread_mutex_unlock(&philo->mutex->meal_eaten);
+        usleep(philo->input->time_to_eat * 2 / 10);
         pthread_mutex_lock(&philo->left_f->mutex);
         print_msg(philo, 2);
         pthread_mutex_lock(&philo->right_f->mutex);
         print_msg(philo, 2);
     } else {
-        pthread_mutex_lock(&philo->mutex->meal_eaten);
-        while (philo->meal_eaten + 1 != philo->right_philo->meal_eaten || philo->meal_eaten + 1 != philo->left_philo->meal_eaten)
-        {
-            pthread_mutex_unlock(&philo->mutex->meal_eaten);
-            usleep(500);
-            pthread_mutex_lock(&philo->mutex->meal_eaten);
-            continue;
-        }
-        pthread_mutex_unlock(&philo->mutex->meal_eaten);
+        usleep(philo->input->time_to_eat * 3 / 10);
         pthread_mutex_lock(&philo->right_f->mutex);
         print_msg(philo, 2);
         pthread_mutex_lock(&philo->left_f->mutex);
@@ -209,13 +161,58 @@ void thinking_stage(t_philo *philo)
     }
 }
 
+int smart_eat_sleep(t_philo *philo)
+{
+    int i;
+    int j;
+
+    j = philo->input->time_to_eat;
+    i = philo->last_time_eat;
+    pthread_mutex_lock(&philo->mutex->last_time_eat);
+    while (get_current_time_ms - i < philo->input->time_to_eat && !*(philo->simulation_has_ended) && !*(philo->philo_died))
+    {
+        pthread_mutex_unlock(&philo->mutex->last_time_eat);
+        usleep(1000);
+        pthread_mutex_lock(&philo->mutex->last_time_eat);
+    }
+    pthread_mutex_unlock(&philo->mutex->last_time_eat);
+    if (*(philo->simulation_has_ended) && *(philo->philo_died))
+        return (1);
+    return (0);
+}
+
+int smart_sleep(t_philo *philo)
+{
+    int i;
+    int j;
+
+    j = philo->input->time_to_sleep;
+    i = philo->last_time_eat;
+    pthread_mutex_lock(&philo->mutex->last_time_eat);
+    while (get_current_time_ms - i < philo->input->time_to_eat && !*(philo->simulation_has_ended) && !*(philo->philo_died))
+    {
+        pthread_mutex_unlock(&philo->mutex->last_time_eat);
+        usleep(1000);
+        pthread_mutex_lock(&philo->mutex->last_time_eat);
+    }
+    pthread_mutex_unlock(&philo->mutex->last_time_eat);
+    if (*(philo->simulation_has_ended) && *(philo->philo_died))
+        return (1);
+    return (0);
+}
+
 void eating_stage(t_philo *philo)
 {
+    int stop;
+
     pthread_mutex_lock(&philo->mutex->last_time_eat);
     philo->last_time_eat = get_current_time_ms();
     pthread_mutex_unlock(&philo->mutex->last_time_eat); 
     print_msg(philo, 3);
-    usleep(philo->input->time_to_eat * 1000);
+    stop = smart_eat_sleep(philo);
+    if (stop)
+        return (stop);
+    // usleep(philo->input->time_to_eat * 1000);
     // release fork
     pthread_mutex_unlock(&philo->left_f->mutex);
     pthread_mutex_unlock(&philo->right_f->mutex);
@@ -235,6 +232,7 @@ void *philo_routine(void *arg)
     pthread_mutex_unlock(&philo->mutex->last_time_eat);
     while (!simulation_should_end(philo)) {
         thinking_stage(philo);
+        if (!simulation_should_end(philo))
         eating_stage(philo);
     }
     return (NULL);
