@@ -71,6 +71,7 @@ void philosophers(t_input *input);
 int	 eating_stage(t_philo *philo);
 void *check_meals(void *args);
 void *check_philo_death(void *args);
-long get_current_time_ms();
+size_t get_current_time_ms();
+
 
 #endif

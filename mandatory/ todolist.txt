@@ -1,0 +1,3 @@
+checki wach simulation tsalat f print
+39el 3la khina li ghaymot fchi struct htal lmain wktbha
+dalchi dyal mallo c w thread
