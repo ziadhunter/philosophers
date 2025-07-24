@@ -1,5 +1,17 @@
 #include "philosophers.h"
 
+int simulation_should_end(t_philo *philo)
+{
+    pthread_mutex_lock(&philo->mutex->stop_simulatoin);
+    if (*(philo->simulation_has_ended))
+    {
+        pthread_mutex_unlock(&philo->mutex->stop_simulatoin);
+        return (1);
+    }
+    pthread_mutex_unlock(&philo->mutex->stop_simulatoin);
+    return (0);
+}
+
 void *check_meals(void *args)
 {
     int full_count;
@@ -26,6 +38,8 @@ void *check_meals(void *args)
             pthread_mutex_unlock(&data->mutex->stop_simulatoin);
             break;
         }
+        if (simulation_should_end(&data->philo[1]))
+			return NULL;
         usleep(1000);
     }
     return (NULL);
@@ -46,8 +60,8 @@ int is_starving(t_philo *philo, long time_to_die)
     long last_eat;
     int ret;
 
-    pthread_mutex_lock(&philo->mutex->last_time_eat);
     current_time = get_current_time_ms();
+    pthread_mutex_lock(&philo->mutex->last_time_eat);
     last_eat = philo->last_time_eat;
     ret = (current_time - last_eat) > time_to_die;
     pthread_mutex_unlock(&philo->mutex->last_time_eat);
@@ -81,13 +95,8 @@ void *check_philo_death(void *args)
             i++;
         }
         usleep(1000);
-        pthread_mutex_lock(&data->mutex->stop_simulatoin);
-        if (data->stop_simulation)
-        {
-            pthread_mutex_unlock(&data->mutex->stop_simulatoin);
+        if (simulation_should_end(&data->philo[1]))
             return NULL;
-        }
-        pthread_mutex_unlock(&data->mutex->stop_simulatoin);
     }
     return NULL;
 }
