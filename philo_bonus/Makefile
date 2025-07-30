@@ -1,8 +1,8 @@
 CC = cc
 CFLAGS = -Wall -Wextra -Werror #-g3 -fsanitize=thread 
-SRCS =	initialization.c  threads.c  utils.c main.c philosophers.c stop_simulation.c get_time.c
+SRCS =	
 OBJS = $(SRCS:.c=.o)
-NAME = philo
+NAME = philo_bonus
 
 all: $(NAME)
 
@@ -11,7 +11,6 @@ $(NAME): $(OBJS)
 
 clean:
 	rm -rf $(OBJS)
-
 
 fclean: clean
 	rm -rf $(NAME)
