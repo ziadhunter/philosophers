@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:19:00 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/25 16:55:14 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/07/31 20:05:56 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,8 @@ void	parcing(char *av[], int ac, t_input *info)
 	info->time_to_sleep = ft_atoi(av[4]);
 	if (ac == 6)
 		info->num_eat = atoi(av[5]);
+	else 
+		info->num_eat = 0;
 	check_arg(info, ac);
 }
 
