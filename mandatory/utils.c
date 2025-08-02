@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 14:19:41 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/25 16:59:01 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/02 21:03:09 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,27 +86,15 @@ void	cleanup_partial_forks(t_philo *philo, int stop, int locked_first)
 
 int	thinking_stage(t_philo *philo)
 {
-	int	stop;
-	int	locked_first;
+	int		stop;
+	size_t	i;
+	int		die;
 
-	stop = 0;
-	locked_first = 0;
+	die = philo->input->time_to_die;
+	pthread_mutex_lock(&philo->mutex->last_time_eat);
+	i = (size_t)((die - (get_current_time_ms() - philo->last_time_eat)) * 0.7);
+	pthread_mutex_unlock(&philo->mutex->last_time_eat);
 	print_msg(philo, 1);
-	usleep(200);
-	if (philo->id % 2 == 1)
-	{
-		stop = lock_fork(philo, 1);
-		locked_first = 1;
-		if (!stop)
-			stop = lock_fork(philo, 2);
-	}
-	else
-	{
-		stop = lock_fork(philo, 2);
-		locked_first = 2;
-		if (!stop)
-			stop = lock_fork(philo, 1);
-	}
-	cleanup_partial_forks(philo, stop, locked_first);
+	stop = smart_sleep(philo, i);
 	return (stop);
 }

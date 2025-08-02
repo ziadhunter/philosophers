@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   destroy_evrything.c                                :+:      :+:    :+:   */
+/*   threads.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:10:40 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/25 15:12:37 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/02 18:51:27 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ void	free_all(t_data *data, int i)
 		free(data->philo);
 	if (data->thread != NULL)
 		free(data->thread);
+	if (data->mutex != NULL)
+		free(data->mutex);
 	free(data);
 	if (i == 1)
 		printf("malloc or initialization of the mutex failed");

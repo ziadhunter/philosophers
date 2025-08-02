@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 14:20:19 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/25 16:59:25 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/02 18:48:48 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ void	init_philo_fields(t_philo *philo, t_data *data, int i)
 	philo->id = i + 1;
 	philo->meal_eaten = 0;
 	pthread_mutex_init(&philo->meal_mutex, NULL);
+	philo->last_time_eat = get_current_time_ms();
 	philo->has_left_fork = false;
 	philo->has_right_fork = false;
 	philo->input = data->input;
@@ -99,7 +100,9 @@ t_data	*initialization(t_input *input)
 	data = malloc(sizeof(t_data));
 	if (!data)
 		return (NULL);
+	memset(data, 0, sizeof(t_data));
 	data->thread = malloc(sizeof(pthread_t) * (input->num_philo + 2));
+	ft_bzero(data->thread, sizeof(pthread_t) * (input->num_philo + 2));
 	data->mutex = init_mutex();
 	data->input = input;
 	data->death.philo = 0;

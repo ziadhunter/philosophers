@@ -1,0 +1,120 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   initialization_bonus.c                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/25 14:20:19 by zfarouk           #+#    #+#             */
+/*   Updated: 2025/08/02 21:39:41 by zfarouk          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "philosophers_bonus.h"
+
+void	free_all(char *message, t_data *data, int exit_status, int i)
+{
+	if (data->semaphore)
+	{
+		if (data->semaphore->forks != SEM_FAILED)
+			sem_close(data->semaphore->forks);
+		if (data->semaphore->printf != SEM_FAILED)
+			sem_close(data->semaphore->printf);
+		if (data->semaphore->meal_eaten != SEM_FAILED)
+			sem_close(data->semaphore->meal_eaten);
+	}
+	free(data->semaphore);
+	if (data->philo)
+	{
+		i = 0;
+		while (i < data->input->num_philo)
+			pthread_mutex_destroy(&data->philo[i++].time_check);
+		free(data->philo);
+	}
+	pthread_mutex_destroy(&data->simulation);
+	if (data->pids)
+		free(data->pids);
+	free(data);
+	if (message)
+		printf("%s", message);
+	exit(exit_status);
+}
+
+t_sem	*init_semaphores(t_input *input)
+{
+	t_sem	*sema;
+
+	sema = malloc(sizeof(t_sem));
+	if (!sema)
+		return (NULL);
+	sem_unlink("/forks");
+	sem_unlink("/printf");
+	sem_unlink("/meals");
+	sema->forks = sem_open("/forks", O_CREAT, 0644, input->num_philo);
+	sema->printf = sem_open("/printf", O_CREAT, 0644, 1);
+	sema->meal_eaten = sem_open("/meals", O_CREAT, 0644, 0);
+	if (sema->forks == SEM_FAILED || sema->meal_eaten == SEM_FAILED
+		|| sema->printf == SEM_FAILED)
+		return (NULL);
+	return (sema);
+}
+
+t_philo	*init_philo(t_input *input, t_sem *semaphore)
+{
+	t_philo	*philo;
+	int		i;
+
+	i = 0;
+	philo = malloc(sizeof(t_philo) * input->num_philo);
+	if (!philo)
+		return (NULL);
+	while (i < input->num_philo)
+	{
+		philo[i].id = i + 1;
+		philo[i].start = 0;
+		philo[i].input = input;
+		philo[i].meal_eaten = 0;
+		philo[i].last_time_eat = get_current_time_ms();
+		pthread_mutex_init(&philo[i].time_check, NULL);
+		philo[i].semaphore = semaphore;
+		philo[i].yes = 0;
+		i++;
+	}
+	return (philo);
+}
+
+t_data	*initialize_all(t_input *input)
+{
+	t_data	*data;
+
+	data = malloc(sizeof(t_data));
+	if (!data)
+	{
+		printf("malloc failed\n");
+		exit(1);
+	}
+	data->semaphore = init_semaphores(input);
+	if (!data->semaphore)
+		free_all("error open semaphore\n", data, 1, 0);
+	data->philo = init_philo(input, data->semaphore);
+	if (!data->philo)
+		free_all("malloc failed\n", data, 1, 0);
+	data->pids = malloc(input->num_philo * sizeof(pid_t));
+	if (!data->pids)
+		free_all("malloc failed\n", data, 1, 0);
+	ft_bzero(data->pids, sizeof(pid_t) * input->num_philo);
+	pthread_mutex_init(&data->simulation, NULL);
+	data->simulation_should_stop = 0;
+	data->input = input;
+	data->thread = 0;
+	data->i = 0;
+	return (data);
+}
+
+void	philosophers(t_input *input)
+{
+	t_data	*data;
+
+	data = initialize_all(input);
+	create_philo(data);
+}

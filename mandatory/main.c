@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:19:00 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/31 20:06:20 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/01 17:21:10 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ void	free_exit(int i)
 	if (i == 2)
 		printf("wrong argument!");
 	if (i == 3)
-		printf("more than 200 philosophers");
+		printf("more than 300 philosophers");
 	exit(1);
 }
 
@@ -48,7 +48,7 @@ void	check_arg(t_input *info, int ac)
 		free_exit(2);
 	if (ac == 6 && info->num_eat <= 0)
 		free_exit(2);
-	if (info->num_philo > 200)
+	if (info->num_philo > 300)
 		free_exit(3);
 }
 

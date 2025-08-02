@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   main_bonus.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:19:00 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/31 20:05:56 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/02 21:37:21 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philosophers.h"
+#include "philosophers_bonus.h"
 
 int	ft_atoi(char *str)
 {
@@ -37,7 +37,7 @@ void	free_exit(int i)
 	if (i == 2)
 		printf("wrong argument!");
 	if (i == 3)
-		printf("more than 200 philosophers");
+		printf("more than 300 philosophers");
 	exit(1);
 }
 
@@ -48,7 +48,7 @@ void	check_arg(t_input *info, int ac)
 		free_exit(2);
 	if (ac == 6 && info->num_eat <= 0)
 		free_exit(2);
-	if (info->num_philo > 200)
+	if (info->num_philo > 300)
 		free_exit(3);
 }
 
@@ -66,7 +66,7 @@ void	parcing(char *av[], int ac, t_input *info)
 	info->time_to_sleep = ft_atoi(av[4]);
 	if (ac == 6)
 		info->num_eat = atoi(av[5]);
-	else 
+	else
 		info->num_eat = 0;
 	check_arg(info, ac);
 }

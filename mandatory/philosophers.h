@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:23:03 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/25 16:56:57 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/02 18:49:19 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 # include <sys/time.h>
 # include <time.h>
 # include <unistd.h>
+# include <string.h> 
 
 typedef struct input
 {
@@ -57,7 +58,7 @@ typedef struct philo
 	bool			has_left_fork;
 	bool			has_right_fork;
 	long			*start;
-	pthread_t		thread;
+	// pthread_t		thread;
 	int				meal_eaten;
 	pthread_mutex_t	meal_mutex;
 	long			last_time_eat;
@@ -88,6 +89,8 @@ typedef struct data
 }					t_data;
 
 /* FUNCTIONS */
+void				ft_bzero(void *s, size_t n);
+int					lock_forks(t_philo *philo);
 void				print_dead(t_data *data);
 void				print_msg(t_philo *philo, int i);
 int					lock_fork(t_philo *philo, int which_one);

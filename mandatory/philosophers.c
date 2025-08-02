@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 13:33:13 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/07/25 16:56:16 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/02 21:04:54 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,9 @@ int	eating_stage(t_philo *philo)
 {
 	int	stop;
 
+	lock_forks(philo);
+	if (philo->input->num_philo == 1)
+		usleep(philo->input->time_to_die * 3000);
 	pthread_mutex_lock(&philo->mutex->last_time_eat);
 	philo->last_time_eat = get_current_time_ms();
 	pthread_mutex_unlock(&philo->mutex->last_time_eat);
@@ -56,8 +59,8 @@ int	eating_stage(t_philo *philo)
 	pthread_mutex_lock(&philo->meal_mutex);
 	philo->meal_eaten++;
 	pthread_mutex_unlock(&philo->meal_mutex);
-	stop = smart_sleep(philo, philo->input->time_to_sleep);
 	print_msg(philo, 4);
+	stop = smart_sleep(philo, philo->input->time_to_sleep);
 	if (stop)
 		return (stop);
 	return (0);
@@ -79,9 +82,9 @@ void	*philo_routine(void *arg)
 	}
 	while (!stop)
 	{
-		stop = thinking_stage(philo);
+		stop = eating_stage(philo);
 		if (!stop)
-			stop = eating_stage(philo);
+			stop = thinking_stage(philo);
 	}
 	unlock_forks(philo);
 	return (NULL);

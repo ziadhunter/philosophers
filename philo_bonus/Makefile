@@ -1,6 +1,8 @@
 CC = cc
-CFLAGS = -Wall -Wextra -Werror #-g3 -fsanitize=thread 
-SRCS =	
+CFLAGS = -Wall -Wextra -Werror -g3 -fsanitize=thread 
+SRCS =	initialization_bonus.c utils_bonus.c \
+		main_bonus.c philosophers_bonus.c  \
+		stop_simulation_bonus.c
 OBJS = $(SRCS:.c=.o)
 NAME = philo_bonus
 
