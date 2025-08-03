@@ -6,24 +6,22 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 13:33:13 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/08/02 21:37:35 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/03 17:22:13 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers_bonus.h"
 
-void	take_forks(t_philo *philo)
+void	smart_usleep(t_philo *philo)
 {
-	sem_wait(philo->semaphore->forks);
-	print_msg(philo, "has taken a fork");
-	sem_wait(philo->semaphore->forks);
-	print_msg(philo, "has taken a fork");
-}
+	size_t	i;
+	int		die;
 
-void	drop_forks(t_philo *philo)
-{
-	sem_post(philo->semaphore->forks);
-	sem_post(philo->semaphore->forks);
+	die = philo->input->time_to_die;
+	pthread_mutex_lock(&philo->time_check);
+	i = (size_t)((die - (get_current_time_ms() - philo->last_time_eat)) * 0.7);
+	pthread_mutex_unlock(&philo->time_check);
+	smart_sleep(i);
 }
 
 void	eating_stage(t_philo *philo)
@@ -53,7 +51,6 @@ void	philo_routine(t_data *data, int i)
 	philo->start = get_current_time_ms();
 	philo->last_time_eat = get_current_time_ms();
 	pthread_create(&monitor, NULL, death_checker, data);
-	pthread_detach(monitor);
 	if (philo->id % 2 == 0)
 		usleep(200);
 	while (1)
@@ -89,7 +86,13 @@ void	create_philo(t_data *data)
 	create_monitor(data);
 	waitpid(-1, &status, 0);
 	join_monitor(data);
-	if (WEXITSTATUS(status) == EXIT_SUCCESS)
-		kill_all_processes(data->pids, data->input->num_philo);
 	free_all(NULL, data, 0, 0);
+}
+
+void	philosophers(t_input *input)
+{
+	t_data	*data;
+
+	data = initialize_all(input);
+	create_philo(data);
 }

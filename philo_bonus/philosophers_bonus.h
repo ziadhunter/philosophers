@@ -6,7 +6,7 @@
 /*   By: zfarouk <zfarouk@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/25 15:23:03 by zfarouk           #+#    #+#             */
-/*   Updated: 2025/08/02 21:38:00 by zfarouk          ###   ########.fr       */
+/*   Updated: 2025/08/03 17:18:48 by zfarouk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ typedef struct sema
 	sem_t			*printf;
 	sem_t			*forks;
 	sem_t			*meal_eaten;
+	sem_t			*death;
 }					t_sem;
 
 typedef struct philo
@@ -54,6 +55,8 @@ typedef struct philo
 	long			last_time_eat;
 	t_input			*input;
 	t_sem			*semaphore;
+	int				stop_simulation;
+	pthread_mutex_t	stop;
 }					t_philo;
 
 typedef struct data
@@ -62,7 +65,7 @@ typedef struct data
 	t_philo			*philo;
 	pid_t			*pids;
 	t_sem			*semaphore;
-	pthread_t		thread;
+	pthread_t		thread[2];
 	pthread_mutex_t	simulation;
 	int				simulation_should_stop;
 	int				i;
